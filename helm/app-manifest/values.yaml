@@ -1,0 +1,13 @@
+image:
+  repository: ikuku1010/text-speech-app
+  tag: latest
+  pullPolicy: Always
+
+service:
+  type: ClusterIP
+  port: 8000
+
+ingress:
+  enabled: true
+  className: "nginx"
+  host: tts.local

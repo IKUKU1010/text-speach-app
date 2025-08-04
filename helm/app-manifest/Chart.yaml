@@ -1,0 +1,5 @@
+apiVersion: v2
+name: text-speech-chart
+description: A Helm chart for Text-to-Speech App
+version: 0.1.0
+appVersion: "1.0.0"

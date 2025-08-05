@@ -1,13 +1,30 @@
+app:
+  name: text2speech-app
+  replicas: 2
+  containerPort: 8000
+
 image:
-  repository: ikuku1010/text-speech-app
+  repository: ikuku1010/text2speech-app
   tag: latest
-  pullPolicy: Always
+  pullPolicy: IfNotPresent
 
 service:
-  type: ClusterIP
-  port: 8000
+  name: tts-service
+  type: NodePort
+  port: 80
+  targetPort: 8000
+  
 
 ingress:
-  enabled: true
-  className: "nginx"
-  host: tts.local
+  name: tts-ingress
+  host: ec2-3-83-64-73.compute-1.amazonaws.com
+  path: /
+  className: nginx
+
+resources:
+  requests:
+    cpu: "100m"
+    memory: "128Mi"
+  limits:
+    cpu: "500m"
+    memory: "512Mi"

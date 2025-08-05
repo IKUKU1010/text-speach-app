@@ -1,68 +1,197 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Text to Speech App</title>
+  <meta charset="UTF-8">
+  <title>Text to Speech App</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-light: #f0f0f0;
+      --bg-dark: #121212;
+      --text-light: #000;
+      --text-dark: #fff;
+      --accent: #2575fc;
+    }
+
+    body {
+      font-family: 'Roboto', sans-serif;
+      background-color: var(--bg-light);
+      color: var(--text-light);
+      transition: background-color 0.4s, color 0.4s;
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    body.dark {
+      background-color: var(--bg-dark);
+      color: var(--text-dark);
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 20px;
+    }
+
+    form {
+      background: rgba(37, 117, 252, 0.1);
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 30px;
+      width: 100%;
+      max-width: 600px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.15);
+    }
+
+    textarea {
+      width: 100%;
+      padding: 10px;
+      font-size: 1rem;
+      border-radius: 8px;
+      border: none;
+      resize: vertical;
+    }
+
+    button {
+      margin-top: 10px;
+      background-color: var(--accent);
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    button:hover {
+      background-color: #0e5bd4;
+    }
+
+    audio, a {
+      margin-top: 10px;
+    }
+
+    #download-link {
+      display: inline-block;
+      margin-left: 10px;
+      text-decoration: underline;
+      color: var(--accent);
+    }
+
+    .toggle-mode {
+      margin-bottom: 20px;
+      cursor: pointer;
+      background: none;
+      border: 2px solid var(--accent);
+      color: var(--accent);
+      padding: 5px 10px;
+      border-radius: 6px;
+    }
+
+    .history {
+      max-width: 600px;
+      width: 100%;
+      margin-top: 30px;
+    }
+
+    .history h3 {
+      margin-bottom: 10px;
+    }
+
+    .history-item {
+      background: rgba(0, 0, 0, 0.05);
+      padding: 10px;
+      margin-bottom: 10px;
+      border-radius: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .history-item audio {
+      flex: 1;
+      margin-right: 10px;
+    }
+  </style>
 </head>
 <body>
-    <h1>Text to Speech Converter</h1>
+  <button class="toggle-mode" onclick="toggleMode()">🌙 Toggle Dark/Light Mode</button>
+  <h1>🎤 Text to Speech Converter</h1>
 
-    <form id="tts-form">
-        <textarea id="text" rows="4" cols="50" placeholder="Enter text here..."></textarea><br><br>
-        <button type="submit">Convert to Speech</button>
-    </form>
+  <form id="tts-form">
+    <textarea id="text" rows="4" placeholder="Enter your text here..."></textarea><br>
+    <button type="submit">Convert to Speech</button>
+  </form>
 
-    <br>
-    <audio id="audio-player" controls style="display: none;"></audio>
-    <br>
-    <a id="download-link" href="#" download="speech.mp3" style="display: none;">Download Audio</a>
+  <audio id="audio-player" controls style="display: none;"></audio>
+  <a id="download-link" href="#" download="speech.mp3" style="display: none;">⬇️ Download</a>
 
-    <hr>
-    <h2>Speech to Text (Coming Soon)</h2>
-    <form id="stt-form">
-        <input type="file" id="audio-file" accept="audio/*">
-        <button type="submit">Upload Audio</button>
-    </form>
-    <p id="stt-result"></p>
+  <div class="history" id="history-container" style="display:none;">
+    <h3>🕘 Playback History</h3>
+    <div id="history-list"></div>
+  </div>
 
-    <script>
-        const form = document.getElementById('tts-form');
-        const audioPlayer = document.getElementById('audio-player');
-        const downloadLink = document.getElementById('download-link');
+  <hr style="margin: 40px 0; width: 100%; max-width: 600px;">
 
-        form.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const text = document.getElementById('text').value;
+  <h2>🗣️ Speech to Text (Coming Soon)</h2>
+  <form id="stt-form">
+    <input type="file" id="audio-file" accept="audio/*">
+    <button type="submit">Upload Audio</button>
+  </form>
+  <p id="stt-result"></p>
 
-            const response = await fetch('/tts', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ text: text })
-            });
+  <script>
+    const form = document.getElementById('tts-form');
+    const audioPlayer = document.getElementById('audio-player');
+    const downloadLink = document.getElementById('download-link');
+    const historyContainer = document.getElementById('history-container');
+    const historyList = document.getElementById('history-list');
 
-            if (response.ok) {
-                const result = await response.json();
-                const audioUrl = `/${result.audio_file}`;
+    form.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const text = document.getElementById('text').value;
 
-                audioPlayer.src = audioUrl;
-                audioPlayer.style.display = 'block';
+      const response = await fetch('/tts', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ text: text })
+      });
 
-                downloadLink.href = audioUrl;
-                downloadLink.style.display = 'inline';
-                downloadLink.download = 'speech.mp3';
+      if (response.ok) {
+        const result = await response.json();
+        const audioUrl = `/${result.audio_file}`;
 
-                audioPlayer.play();
-            } else {
-                alert('Error generating speech.');
-            }
-        });
+        // Main player
+        audioPlayer.src = audioUrl;
+        audioPlayer.style.display = 'block';
+        downloadLink.href = audioUrl;
+        downloadLink.style.display = 'inline';
+        audioPlayer.play();
 
-        const sttForm = document.getElementById('stt-form');
-        const sttResult = document.getElementById('stt-result');
+        // History
+        historyContainer.style.display = 'block';
+        const historyItem = document.createElement('div');
+        historyItem.className = 'history-item';
+        historyItem.innerHTML = `
+          <audio src="${audioUrl}" controls></audio>
+          <a href="${audioUrl}" download="speech.mp3">⬇️</a>
+        `;
+        historyList.prepend(historyItem);
+      } else {
+        alert('Error generating speech.');
+      }
+    });
 
-        sttForm.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            alert("Speech-to-Text feature is not implemented yet.");
-        });
-    </script>
+    document.getElementById('stt-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      alert("Speech-to-Text feature is not implemented yet.");
+    });
+
+    function toggleMode() {
+      document.body.classList.toggle('dark');
+    }
+  </script>
 </body>
 </html>
